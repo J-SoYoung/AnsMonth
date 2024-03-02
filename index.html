@@ -62,6 +62,7 @@
   <button onclick="button_all_delete()">일지 전체 삭제</button>
 
   <script>
+    let today_list = []
     const $give = document.getElementById('give')
     const $lunch = document.getElementById('lunch')
     const $etc = document.getElementById('etc')
@@ -71,13 +72,15 @@
     const $tbody_today_log = document.getElementById('tbody_today_log')
     const $tbody_month_log = document.getElementById('tbody_month_log')
 
-    const curMonth = new Date().getMonth() + 1
-    const $span = document.getElementById('cur_month')
-    $span.textContent = curMonth;
+    const currentDate = new Date()
+    const curYears = currentDate.getFullYear()
+    const curMonth = currentDate.getMonth() + 1
+    const $span = document.getElementById('cur_month').textContent = curMonth;
 
     function Table_Draw(data) {
       // table생성
       const newRow = document.createElement('tr');
+      newRow.className = 'today_item'
       newRow.id = data._id
       newRow.innerHTML = `<tr>
           <td>${data.today}</td>
@@ -121,19 +124,15 @@
       const storedNotSale = JSON.parse(localStorage.getItem('totalNotSale')) || [];
       const storedTrash = JSON.parse(localStorage.getItem('totalTrash')) || [];
 
-      const currentDate = new Date()
-      const curYears = currentDate.getFullYear()
-      const curMonth = currentDate.getMonth() + 1
-
       tbody_month_log.innerHTML =
         `<tr>
-        <td>${curYears}년 ${curMonth}월</td>
-        <td>${storedGive.length === 0 ? "-" : parseInt(storedGive).toLocaleString()}</td>
-        <td>${storedLunch.length === 0 ? "-" : parseInt(storedLunch).toLocaleString()}</td>
-        <td>${storedEtc.length === 0 ? "-" : parseInt(storedEtc).toLocaleString()}</td>          
-        <td>${storedNotSale.length === 0 ? "-" : parseInt(storedNotSale).toLocaleString()}</td>
-        <td>${storedTrash.length === 0 ? "-" : parseInt(storedTrash).toLocaleString()}</td>
-      </tr>`
+          <td>${curYears}년 ${curMonth}월</td>
+          <td>${storedGive.length === 0 ? "-" : parseInt(storedGive).toLocaleString()}</td>
+          <td>${storedLunch.length === 0 ? "-" : parseInt(storedLunch).toLocaleString()}</td>
+          <td>${storedEtc.length === 0 ? "-" : parseInt(storedEtc).toLocaleString()}</td>          
+          <td>${storedNotSale.length === 0 ? "-" : parseInt(storedNotSale).toLocaleString()}</td>
+          <td>${storedTrash.length === 0 ? "-" : parseInt(storedTrash).toLocaleString()}</td>
+        </tr>`
     }
 
     // 데이터 로드
@@ -172,6 +171,7 @@
       const storedData = JSON.parse(localStorage.getItem('ansTodayData')) || [];
       storedData.sort((a, b) => new Date(b.today) - new Date(a.today));
       storedData.push(data);
+      today_list.push(data);
 
       localStorage.setItem('ansTodayData', JSON.stringify(storedData));
 
@@ -190,6 +190,7 @@
 
       // 일지에 표를 그린다. 
       Today_Table_Draw(data)
+      // Today_Table_Draw(today_list)
 
       // 월 합산 데이터 그리기
       Month_Table_Draw()
@@ -203,17 +204,68 @@
 
     // 데이터 삭제
     function button_delete(id) {
-
       const rowToRemove = document.getElementById(`${id}`);
       if (rowToRemove) {
         rowToRemove.remove();
       }
-
       const storedData = JSON.parse(localStorage.getItem('ansTodayData')) || [];
-      const newList = storedData.filter((list) => Number(list._id) !== Number(id))
+      const newList = storedData.filter((data) => Number(data._id) !== Number(id))
 
       localStorage.removeItem('ansTodayData');
       localStorage.setItem('ansTodayData', JSON.stringify(newList));
+
+      let lunch = localStorage.getItem('totalLunch');
+      let give = localStorage.getItem('totalGive');
+      let etc = localStorage.getItem('totalEtc');
+      let not_sale = localStorage.getItem('totalNotSale');
+      let trash = localStorage.getItem('totalTrash');
+
+      const deleteData = storedData.filter((data) => Number(data._id) === Number(id))
+      console.log(deleteData)
+      deleteData.forEach((d) => {
+        lunch -= d.lunch
+        give -= d.give
+        etc -= d.etc
+        not_sale -= d.not_sale
+        trash -= d.trash
+      })
+
+      localStorage.setItem('totalGive', lunch);
+      localStorage.setItem('totalLunch', give);
+      localStorage.setItem('totalEtc', etc);
+      localStorage.setItem('totalNotSale', not_sale);
+      localStorage.setItem('totalTrash', trash);
+
+      tbody_month_log.innerHTML =
+        `<tr>
+          <td>${curYears}년 ${curMonth}월</td>
+          <td>${parseInt(give).toLocaleString()}</td>
+          <td>${parseInt(lunch).toLocaleString()}</td>
+          <td>${parseInt(etc).toLocaleString()}</td>          
+          <td>${parseInt(not_sale).toLocaleString()}</td>
+          <td>${parseInt(trash).toLocaleString()}</td>
+        </tr>`
+    }
+
+    // 일지 전체 삭제
+    function button_all_delete() {
+      if (confirm('일지를 전체 삭제하시겠습니까?')) {
+        localStorage.removeItem('ansTodayData');
+        localStorage.removeItem('totalTrash');
+        localStorage.removeItem('totalGive');
+        localStorage.removeItem('totalEtc');
+        localStorage.removeItem('totalNotSale');
+        localStorage.removeItem('totalLunch');
+
+        const $rowToListRemove = document.getElementsByClassName('today_item');
+        const $rowToMonthRemove = document.getElementById('tbody_month_log')
+
+        const rowsArray = [...$rowToListRemove];
+        rowsArray.forEach(row => row.remove());
+
+        $rowToMonthRemove.remove()
+        return
+      }
     }
 
   </script>
