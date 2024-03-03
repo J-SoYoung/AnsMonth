@@ -83,7 +83,6 @@
     const curMonth = currentDate.getMonth() + 1
     const $span = document.getElementById('cur_month').textContent = curMonth;
 
-
     function today_table_draw(data) {
       // table생성
       const newRow = document.createElement('tr');
@@ -117,7 +116,6 @@
       $tbody_today_log.appendChild(newRow);
     }
 
-
     function get_value_from_localStorage(key) {
       const stored_value = JSON.parse(localStorage.getItem(key)) || [];
       return stored_value.length === 0 ? "-" : parseInt(stored_value).toLocaleString()
@@ -125,11 +123,11 @@
 
     function month_table_draw() {
       // 월 합산 데이터 그리기
-      const stored_give = get_value_from_localStorage('totalGive')
-      const stored_lunch = get_value_from_localStorage('totalLunch')
-      const stored_etc = get_value_from_localStorage('totalEtc')
-      const stored_not_sale = get_value_from_localStorage('totalNotSale')
-      const stored_trash = get_value_from_localStorage('totalTrash')
+      const stored_give = get_value_from_localStorage('total_give')
+      const stored_lunch = get_value_from_localStorage('total_lunch')
+      const stored_etc = get_value_from_localStorage('total_etc')
+      const stored_not_sale = get_value_from_localStorage('total_not_sale')
+      const stored_trash = get_value_from_localStorage('total_trash')
 
       tbody_month_log.innerHTML =
         `<tr>
@@ -156,17 +154,19 @@
     // 날짜 선택
     const curDate = new Date().toISOString().split('T')[0]
     let $today = document.getElementById('today').value = curDate
-    document.getElementById('today').addEventListener('change', handleDateChange)
 
     function handleDateChange() {
       const curDateChange = document.getElementById('today').value
       $today = curDateChange
     }
+    document.getElementById('today').addEventListener('change', handleDateChange)
 
-    // 데이터 저장 
+
+
+    // 표 생성 ( 일지, 월 합산 )
     function info_Enter() {
       if ($give.value == '' || $lunch.value == '' || $etc.value == '' || $not_sale.value == '' || $trash.value == '') {
-        return alert('빈칸있음')
+        return alert('빈칸있어요!. 출금이 없는 날은 0으로 넣어주세요')
       }
       const data = {
         _id: new Date().getTime(),
@@ -185,25 +185,24 @@
 
       localStorage.setItem('ansTodayData', JSON.stringify(storedData));
 
-      // 일지에 표를 그린다. 
+      // 일지 그리기
       today_table_draw(data)
 
-      // 각 항목 합산
-      const totalGive = storedData.reduce((sum, entry) => sum + parseInt(entry.give), 0);
-      const totalLunch = storedData.reduce((sum, entry) => sum + parseInt(entry.lunch), 0);
-      const totalEtc = storedData.reduce((sum, entry) => sum + parseInt(entry.etc), 0);
-      const totalNotSale = storedData.reduce((sum, entry) => sum + parseInt(entry.not_sale), 0);
-      const totalTrash = storedData.reduce((sum, entry) => sum + parseInt(entry.trash), 0);
 
-      localStorage.setItem('totalGive', totalGive);
-      localStorage.setItem('totalLunch', totalLunch);
-      localStorage.setItem('totalEtc', totalEtc);
-      localStorage.setItem('totalNotSale', totalNotSale);
-      localStorage.setItem('totalTrash', totalTrash);
+      // 각 항목 합산, 저장
+      function save_data_localStorage(key) {
+        const result = storedData.reduce((sum, entry) => sum + parseInt(entry[key]), 0);
+        localStorage.setItem(`total_${key}`, result);
+        return result
+      }
+      const total_give = save_data_localStorage('give')
+      const total_lunch = save_data_localStorage('lunch')
+      const total_etc = save_data_localStorage('etc')
+      const total_not_sale = save_data_localStorage('not_sale')
+      const total_trash = save_data_localStorage('trash')
 
-
-      // 월 합산 데이터 그리기
-      Month_Table_Draw()
+      // 월 합산 그리기
+      month_table_draw()
 
       $give.value = ''
       $lunch.value = ''
