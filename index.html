@@ -83,6 +83,11 @@
     const curMonth = currentDate.getMonth() + 1
     const $span = document.getElementById('cur_month').textContent = curMonth;
 
+    // const storedData = JSON.parse(localStorage.getItem('ansTodayData')) || [];
+    function get_data_localStorage() {
+      return JSON.parse(localStorage.getItem('ansTodayData')) || [];
+    }
+
     function today_table_draw(data) {
       // table생성
       const newRow = document.createElement('tr');
@@ -129,7 +134,7 @@
       const stored_not_sale = get_value_from_localStorage('total_not_sale')
       const stored_trash = get_value_from_localStorage('total_trash')
 
-      tbody_month_log.innerHTML =
+      $tbody_month_log.innerHTML =
         `<tr>
           <td>${curYears}년 ${curMonth}월</td>
           <td>${stored_give}</td>
@@ -143,7 +148,7 @@
     // 데이터 로드
     window.onload = helloAns
     function helloAns() {
-      const storedData = JSON.parse(localStorage.getItem('ansTodayData')) || [];
+      const storedData = get_data_localStorage()
       storedData.sort((a, b) => new Date(a.today) - new Date(b.today));
       storedData.forEach((data) => {
         today_table_draw(data)
@@ -177,8 +182,7 @@
         not_sale: $not_sale.value,
         trash: $trash.value
       };
-
-      const storedData = JSON.parse(localStorage.getItem('ansTodayData')) || [];
+      const storedData = get_data_localStorage()
       storedData.sort((a, b) => new Date(b.today) - new Date(a.today));
       storedData.push(data);
       today_list.push(data);
@@ -188,18 +192,18 @@
       // 일지 그리기
       today_table_draw(data)
 
-
       // 각 항목 합산, 저장
-      function save_data_localStorage(key) {
+      function save_caculate_localstorage(key) {
         const result = storedData.reduce((sum, entry) => sum + parseInt(entry[key]), 0);
         localStorage.setItem(`total_${key}`, result);
         return result
       }
-      const total_give = save_data_localStorage('give')
-      const total_lunch = save_data_localStorage('lunch')
-      const total_etc = save_data_localStorage('etc')
-      const total_not_sale = save_data_localStorage('not_sale')
-      const total_trash = save_data_localStorage('trash')
+
+      const total_give = save_caculate_localstorage('give')
+      const total_lunch = save_caculate_localstorage('lunch')
+      const total_etc = save_caculate_localstorage('etc')
+      const total_not_sale = save_caculate_localstorage('not_sale')
+      const total_trash = save_caculate_localstorage('trash')
 
       // 월 합산 그리기
       month_table_draw()
@@ -211,68 +215,60 @@
       $trash.value = ''
     }
 
-    // 데이터 삭제
     function button_delete(id) {
+      // DOM삭제
       const rowToRemove = document.getElementById(`${id}`);
       if (rowToRemove) {
         rowToRemove.remove();
       }
-      const storedData = JSON.parse(localStorage.getItem('ansTodayData')) || [];
-      const newList = storedData.filter((data) => Number(data._id) !== Number(id))
 
-      localStorage.removeItem('ansTodayData');
-      localStorage.setItem('ansTodayData', JSON.stringify(newList));
+      // storage삭제, 새로고침 후 업데이트
+      const storedData = get_data_localStorage()
+      const indexToRemove = storedData.findIndex(item => item._id === id);
+      const deleteData = storedData[indexToRemove]
 
-      let lunch = localStorage.getItem('totalLunch');
-      let give = localStorage.getItem('totalGive');
-      let etc = localStorage.getItem('totalEtc');
-      let not_sale = localStorage.getItem('totalNotSale');
-      let trash = localStorage.getItem('totalTrash');
+      if (indexToRemove !== -1) {
+        storedData.splice(indexToRemove, 1);
+        localStorage.setItem('ansTodayData', JSON.stringify(storedData));
+      }
 
-      const deleteData = storedData.filter((data) => Number(data._id) === Number(id))
+      // storage합산 데이터 연산 후 결과출력
+      const rowContent = Object.entries(deleteData).map(([key, value]) => {
+        if (key !== 'today' && key !== '_id') {
+          let storage = localStorage.getItem(`total_${key}`)
+          storage -= value
+          localStorage.setItem(`total_${key}`, storage)
 
-      deleteData.forEach((d) => {
-        lunch -= d.lunch
-        give -= d.give
-        etc -= d.etc
-        not_sale -= d.not_sale
-        trash -= d.trash
+          return `<td>${parseInt(storage).toLocaleString()}</td>`
+        }
       })
 
-      localStorage.setItem('totalGive', lunch);
-      localStorage.setItem('totalLunch', give);
-      localStorage.setItem('totalEtc', etc);
-      localStorage.setItem('totalNotSale', not_sale);
-      localStorage.setItem('totalTrash', trash);
-
-      tbody_month_log.innerHTML =
-        `<tr>
-          <td>${curYears}년 ${curMonth}월</td>
-          <td>${parseInt(give).toLocaleString()}</td>
-          <td>${parseInt(lunch).toLocaleString()}</td>
-          <td>${parseInt(etc).toLocaleString()}</td>          
-          <td>${parseInt(not_sale).toLocaleString()}</td>
-          <td>${parseInt(trash).toLocaleString()}</td>
-        </tr>`
+      tbody_month_log.innerHTML = `
+      <tr>
+        <td>${curYears}년 ${curMonth}월</td>
+        ${rowContent}
+      </tr>`;
     }
 
     // 일지 전체 삭제
     function button_all_delete() {
       if (confirm('일지를 전체 삭제하시겠습니까?')) {
-        localStorage.removeItem('ansTodayData');
-        localStorage.removeItem('totalTrash');
-        localStorage.removeItem('totalGive');
-        localStorage.removeItem('totalEtc');
-        localStorage.removeItem('totalNotSale');
-        localStorage.removeItem('totalLunch');
-
+        // DOM삭제
         const $rowToListRemove = document.getElementsByClassName('today_item');
         const $rowToMonthRemove = document.getElementById('tbody_month_log')
 
         const rowsArray = [...$rowToListRemove];
         rowsArray.forEach(row => row.remove());
-
         $rowToMonthRemove.remove()
+
+        // storage삭제
+        localStorage.removeItem('ansTodayData');
+        localStorage.removeItem('total_give');
+        localStorage.removeItem('total_lunch');
+        localStorage.removeItem('total_etc');
+        localStorage.removeItem('total_not_sale');
+        localStorage.removeItem('total_trash');
+
         return
       }
     }
