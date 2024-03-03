@@ -6,60 +6,66 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     @import url("/style.css");
+
+    .main {
+      border: 1px solid tomato;
+      width: 1000px;
+    }
   </style>
   <title>AnsMonth</title>
 
 </head>
 
 <body>
-  <h2>AnsMonth</h2>
-  <!-- <form> -->
-  <input id="today" type="date">
-  <input id="give" type="number" placeholder="기부">
-  <input id="lunch" type="number" placeholder="식대">
-  <input id="etc" type="number" placeholder="기타">
-  <input id="not_sale" type="number" placeholder="판매불가">
-  <input id="trash" type="number" placeholder="폐기">
-  <button onclick="info_Enter()">입력</button>
-  <!-- </form> -->
+  <div class="main">
+    <h2>AnsMonth</h2>
+    <!-- <form> -->
+    <input id="today" type="date">
+    <input id="give" type="number" placeholder="기부">
+    <input id="lunch" type="number" placeholder="식대">
+    <input id="etc" type="number" placeholder="기타">
+    <input id="not_sale" type="number" placeholder="판매불가">
+    <input id="trash" type="number" placeholder="폐기">
+    <button onclick="info_Enter()">입력</button>
+    <!-- </form> -->
 
-  <div id="ans_month_log">
-    <h2><span id="cur_month"></span>월 합산</h2>
-    <table class="table table-bordered">
-      <thead>
-        <tr class="text-center">
-          <th scope="col" abbr="">날짜</th>
-          <th scope="col" abbr="">기부</th>
-          <th scope="col" abbr="">식대</th>
-          <th scope="col" abbr="">기타(식대 외 카드사용)</th>
-          <th scope="col" abbr="">판매불가</th>
-          <th scope="col" abbr="">폐기</th>
-        </tr>
-      </thead>
-      <tbody id="tbody_month_log"></tbody>
-    </table>
+    <div id="ans_month_log">
+      <h2><span id="cur_month"></span>월 합산</h2>
+      <table class="table table-bordered">
+        <thead>
+          <tr class="text-center">
+            <th scope="col" abbr="">날짜</th>
+            <th scope="col" abbr="">기부</th>
+            <th scope="col" abbr="">식대</th>
+            <th scope="col" abbr="">기타(식대 외 카드사용)</th>
+            <th scope="col" abbr="">판매불가</th>
+            <th scope="col" abbr="">폐기</th>
+          </tr>
+        </thead>
+        <tbody id="tbody_month_log"></tbody>
+      </table>
+    </div>
+
+    <div id="ans_today_log">
+      <h2>일지</h2>
+      <table id="table_today_log" class="table table-bordered">
+        <thead>
+          <tr class="text-center">
+            <th scope="col" abbr="">날짜</th>
+            <th scope="col" abbr="">기부</th>
+            <th scope="col" abbr="">식대</th>
+            <th scope="col" abbr="">기타(식대 외 카드사용)</th>
+            <th scope="col" abbr="">판매불가</th>
+            <th scope="col" abbr="">폐기</th>
+            <th scope="col" abbr="">-</th>
+          </tr>
+        </thead>
+        <tbody id="tbody_today_log"></tbody>
+      </table>
+    </div>
+    <button onclick="button_all_delete()">일지 전체 삭제</button>
+
   </div>
-
-  <div id="ans_today_log">
-    <h2>일지</h2>
-    <table id="table_today_log" class="table table-bordered">
-      <thead>
-        <tr class="text-center">
-          <th scope="col" abbr="">날짜</th>
-          <th scope="col" abbr="">기부</th>
-          <th scope="col" abbr="">식대</th>
-          <th scope="col" abbr="">기타(식대 외 카드사용)</th>
-          <th scope="col" abbr="">판매불가</th>
-          <th scope="col" abbr="">폐기</th>
-          <th scope="col" abbr="">-</th>
-        </tr>
-      </thead>
-      <tbody id="tbody_today_log"></tbody>
-    </table>
-  </div>
-
-
-  <button onclick="button_all_delete()">일지 전체 삭제</button>
 
   <script>
     let today_list = []
@@ -77,20 +83,25 @@
     const curMonth = currentDate.getMonth() + 1
     const $span = document.getElementById('cur_month').textContent = curMonth;
 
-    function Table_Draw(data) {
+  
+    function today_table_draw(data) {
       // table생성
       const newRow = document.createElement('tr');
       newRow.className = 'today_item'
       newRow.id = data._id
-      newRow.innerHTML = `<tr>
-          <td>${data.today}</td>
-          <td>${parseInt(data.give).toLocaleString()}</td>
-          <td>${parseInt(data.lunch).toLocaleString()}</td>
-          <td>${parseInt(data.etc).toLocaleString()}</td>
-          <td>${parseInt(data.not_sale).toLocaleString()}</td>
-          <td>${parseInt(data.trash).toLocaleString()}</td>
-          <td><button onclick="button_delete(${data._id})">삭제</button></td>
-          </tr>`
+
+      const rowContent = Object.entries(data).map(([key, value]) => {
+        if (key !== 'today' && key !== '_id') {
+          return `<td>${parseInt(value).toLocaleString()}</td>`;
+        }
+      }).join('');
+
+      newRow.innerHTML = `
+        <td>${data.today}</td>
+        ${rowContent}
+        <td><button onclick="button_delete(${data._id})">삭제</button></td>
+      `;
+
 
       // table 날짜순 정렬 및 삽입
       const currentDate = new Date(data.today).getTime();
@@ -104,16 +115,6 @@
         }
       }
       $tbody_today_log.appendChild(newRow);
-    }
-
-    function Today_Table_Draw(data) {
-      if (!Array.isArray(data)) {
-        Table_Draw(data)
-      } else {
-        data.forEach((d) => {
-          Table_Draw(d)
-        })
-      }
     }
 
     function Month_Table_Draw() {
@@ -140,7 +141,10 @@
     function helloAns() {
       const storedData = JSON.parse(localStorage.getItem('ansTodayData')) || [];
       storedData.sort((a, b) => new Date(a.today) - new Date(b.today));
-      Today_Table_Draw(storedData)
+      storedData.forEach((data) => {
+        today_table_draw(data)
+      })
+
       Month_Table_Draw()
     }
 
@@ -168,12 +172,16 @@
         not_sale: $not_sale.value,
         trash: $trash.value
       };
+
       const storedData = JSON.parse(localStorage.getItem('ansTodayData')) || [];
       storedData.sort((a, b) => new Date(b.today) - new Date(a.today));
       storedData.push(data);
       today_list.push(data);
 
       localStorage.setItem('ansTodayData', JSON.stringify(storedData));
+
+      // 일지에 표를 그린다. 
+      today_table_draw(data)
 
       // 각 항목 합산
       const totalGive = storedData.reduce((sum, entry) => sum + parseInt(entry.give), 0);
@@ -188,9 +196,6 @@
       localStorage.setItem('totalNotSale', totalNotSale);
       localStorage.setItem('totalTrash', totalTrash);
 
-      // 일지에 표를 그린다. 
-      Today_Table_Draw(data)
-      // Today_Table_Draw(today_list)
 
       // 월 합산 데이터 그리기
       Month_Table_Draw()
@@ -221,7 +226,7 @@
       let trash = localStorage.getItem('totalTrash');
 
       const deleteData = storedData.filter((data) => Number(data._id) === Number(id))
-      console.log(deleteData)
+
       deleteData.forEach((d) => {
         lunch -= d.lunch
         give -= d.give
