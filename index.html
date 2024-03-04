@@ -19,7 +19,6 @@
 <body>
   <div class="main">
     <h2>AnsMonth</h2>
-    <!-- <form> -->
     <input id="today" type="date" oninput="move_next_input(this, 'give')">
     <input id="give" type="number" placeholder="기부" oninput="move_next_input(this, 'lunch')">
     <input id="lunch" type="number" placeholder="식대" oninput="move_next_input(this, 'etc')">
@@ -27,7 +26,6 @@
     <input id="not_sale" type="number" placeholder="판매불가" oninput="move_next_input(this, 'trash')">
     <input id="trash" type="number" placeholder="폐기" oninput="move_next_input(this, 'give')">
     <button onclick="info_Enter()">입력</button>
-    <!-- </form> -->
 
     <div id="ans_month_log">
       <h2><span id="cur_month"></span>월 합산</h2>
@@ -97,7 +95,8 @@
     let timeout;
     function move_next_input(currentInput, nextInput) {
       clearTimeout(timeout);
-
+      console.log('핸들러 내부 this-', this)
+      console.log('인수로 전달한 this-', currentInput)
       timeout = setTimeout(function () {
         if (currentInput.value.trim() !== '') {
           document.getElementById(nextInput).focus();
@@ -165,8 +164,7 @@
     }
 
     // 데이터 로드
-    document.addEventListener('DOMContentLoaded', function(){
-      console.log('DOMContentLoaded')
+    document.addEventListener('DOMContentLoaded', function () {
       const storedData = get_data_localStorage()
       storedData.sort((a, b) => new Date(a.today) - new Date(b.today));
       storedData.forEach((data) => {
