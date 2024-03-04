@@ -102,7 +102,7 @@
         if (currentInput.value.trim() !== '') {
           document.getElementById(nextInput).focus();
         }
-      }, 1000);
+      }, 700);
     }
 
     document.addEventListener('keydown', handleKeyPress);
@@ -111,7 +111,6 @@
         info_Enter();
       }
     }
-
 
     function today_table_draw(data) {
       // table생성
@@ -166,15 +165,16 @@
     }
 
     // 데이터 로드
-    window.onload = helloAns
-    function helloAns() {
+    document.addEventListener('DOMContentLoaded', function(){
+      console.log('DOMContentLoaded')
       const storedData = get_data_localStorage()
       storedData.sort((a, b) => new Date(a.today) - new Date(b.today));
       storedData.forEach((data) => {
         today_table_draw(data)
       })
       month_table_draw()
-    }
+    });
+
 
     // 날짜 선택
     const curDate = new Date().toISOString().split('T')[0]
